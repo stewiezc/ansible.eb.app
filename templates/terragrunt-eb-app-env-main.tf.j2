@@ -1,0 +1,178 @@
+provider "aws" {
+	region = "{{ aws_region }}"
+}
+
+resource "aws_elastic_beanstalk_configuration_template" "eb-app-template" {
+    name = "{{ name }}-{{ env }}-template"
+    application = "{{ name }}"
+    solution_stack_name = "{{ stack }}"
+    setting {
+	namespace = "aws:elasticbeanstalk:application"
+	name = "Application Healthcheck URL"
+	value = "{{ healthcheck_url }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:launchconfiguration"
+        name = "EC2KeyName"
+        value = "{{ ec2keyname }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:sns:topics"
+        name = "Notification Endpoint"
+        value = "{{ notification_email }}"
+    }
+    setting {
+        namespace = "aws:elb:loadbalancer"
+        name = "CrossZone"
+        value = "{{ crosszone }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:asg"
+        name = "MinSize"
+        value = "{{ autoscaling_minsize }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:asg"
+        name = "MaxSize"
+        value = "{{ autoscaling_maxsize }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:command"
+        name = "DeploymentPolicy"
+        value = "{{ deployment_policy }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:launchconfiguration"
+        name = "InstanceType"
+        value = "{{ instance_type }}"
+    }
+    setting {
+        namespace = "aws:elb:policies"
+        name = "ConnectionDrainingEnabled"
+        value = "{{ connection_draining_enabled }}"
+    }
+    setting {
+        namespace = "aws:elb:policies"
+        name = "ConnectionDrainingTimeout"
+        value = "{{ connection_draining_timeout }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:updatepolicy:rollingupdate"
+        name = "RollingUpdateEnabled"
+        value = "{{ rolling_update_enabled }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:updatepolicy:rollingupdate"
+        name = "RollingUpdateType"
+        value = "{{ rolling_update_type }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:environment"
+        name = "ServiceRole"
+        value = "{{ service_role }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:healthreporting:system"
+        name = "SystemType"
+        value = "{{ system_type }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:managedactions"
+        name = "ManagedActionsEnabled"
+        value = "{{ managed_actions_enabled }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:managedactions"
+        name = "PreferredStartTime"
+        value = "{{ preferred_start_time }}"
+    }
+    setting {
+        namespace = "aws:elasticbeanstalk:managedactions:platformupdate"
+        name = "UpdateLevel"
+        value = "{{ update_level }}"
+    }
+    setting {
+        namespace = "aws:autoscaling:launchconfiguration"
+        name = "IamInstanceProfile"
+        value = "{{ iam_instance_profile }}"
+    }
+{% if vpc_id is defined %}
+  setting {
+        namespace = "aws:ec2:vpc"
+        name = "VPCId"
+        value = "{{ vpc_id }}"
+    }
+{% endif %}
+{% if associate_public_ip_address is defined %}
+  setting {
+        namespace = "aws:ec2:vpc"
+        name = "AssociatePublicIpAddress"
+        value = "{{ associate_public_ip_address }}"
+    }
+{% endif %}
+{% if elb_scheme is defined %}
+  setting {
+        namespace = "aws:ec2:vpc"
+        name = "ELBScheme"
+        value = "{{ elb_scheme }}"
+    }
+{% endif %}
+{% if autoscaling_subnets is defined %}
+  setting {
+        namespace = "aws:ec2:vpc"
+        name = "Subnets"
+        value = "{{ autoscaling_subnets|join(',') }}"
+    }
+{% endif %}
+{% if elb_subnets is defined %}
+    setting {
+        namespace = "aws:ec2:vpc"
+        name = "ELBSubnets"
+        value = "{{ elb_subnets|join(',') }}"
+    }
+{% endif %}
+{% if platform_specific is defined %}
+  {% for item in platform_specific %}
+  setting {
+        namespace = "{{ item.namespace }}"
+        name = "{{ item.name }}"
+        value = "{{ item.value }}"
+    }
+  {% endfor %}
+{% endif %}
+{% if elb_listeners is defined %}
+  {% for item in elb_listeners %}
+  setting {
+    namespace = "aws:elb:listener:{{ item.listener_port }}"
+    name = "ListenerProtocol"
+    value = "{{ item.listener_protocol }}"
+  }
+  setting {
+    namespace = "aws:elb:listener:{{ item.listener_port }}"
+    name = "ListenerEnabled"
+    value = "{{ item.listener_enabled }}"
+  }
+  setting {
+    namespace = "aws:elb:listener:{{ item.listener_port }}"
+    name = "InstancePort"
+    value = "{{ item.instance_port }}"
+  }
+  setting {
+    namespace = "aws:elb:listener:{{ item.listener_port }}"
+    name = "InstanceProtocol"
+    value = "{{ item.instance_protocol }}"
+  }
+  setting {
+    namespace = "aws:elb:listener:{{ item.listener_port }}"
+    name = "SSLCertificateId"
+    value = "{{ item.ssl_certificate_id }}"
+  }
+  {% endfor %}
+{% endif %}
+}
+
+resource "aws_elastic_beanstalk_environment" "eb-environment" {
+    name = "{{ name }}-{{ env }}"
+    application = "{{ name }}"
+    template_name = "${aws_elastic_beanstalk_configuration_template.eb-app-template.name}"
+}

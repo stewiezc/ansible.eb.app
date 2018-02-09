@@ -1,0 +1,70 @@
+# commented settings are recommended to inherit defaults from ansible role
+name: 
+notification_email: 
+
+# --- terragrunt settings
+terragrunt_s3_bucket: 
+#terragrunt_state_file_id:
+#terragrunt_s3_region: 
+#terragrunt_app_s3_key: 
+#terragrunt_env_s3_key: 
+
+# --- elastic beanstalk basics
+stack: 
+healthcheck_url: /health
+deployment_policy: Rolling
+
+# --- elastic beanstalk instance settings
+ec2keyname: myteam-awsacctabc-us-west-2
+instance_type: t2.micro
+system_type: enhanced
+associate_public_ip_address: false
+
+# --- elastic beanstalk ELB
+autoscaling_minsize: 1
+autoscaling_maxsize: 1
+#crosszone: false
+connection_draining_enabled: false
+connection_draining_timeout: 20
+elb_listeners:
+  - listener_port: 443
+    listener_protocol: HTTPS
+    listener_enabled: "true"
+    instance_port: 80
+    instance_protocol: HTTP
+    ssl_certificate_id: arn:aws:acm:us-west-2:1234567890:certificate/1234567890-123-1234-b1a2-cb1234567890
+  - listener_port: 80
+    listener_protocol: HTTP
+    listener_enabled: "false"
+    instance_port: 80
+    instance_protocol: HTTP
+    ssl_certificate_id: "None"
+#elb_scheme: internal
+
+# --- elastic beanstalk managed updates
+rolling_update_enabled: true
+rolling_update_type: Health
+managed_actions_enabled: true
+preferred_start_time: Tue:05:00
+update_level: patch
+
+# --- elastic beanstalk IAM
+service_role: aws-elasticbeanstalk-service-role
+iam_instance_profile: aws-elasticbeanstalk-ec2-role
+
+# --- vpc settings
+vpc_id: 
+#subnet_tag_name: 
+#subnet_tag_autoscaling: 
+#subnet_tag_elb: 
+autoscaling_subnets: 
+elb_subnets: 
+
+# --- platform_specific
+#platform_specific:
+#  - namespace: aws:namespace
+#    name: Config
+#    value: "true"
+#  - namespace: aws:anothernamespace
+#    name: MoreConfig
+#    value: "false"

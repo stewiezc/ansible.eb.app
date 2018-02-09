@@ -1,0 +1,18 @@
+---
+- name: gather facts for autoscaling subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_id }}"
+  register: autoscaling_subnet_facts
+- name: gather facts for elb subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_id }}"
+  register: elb_subnet_facts
+
+- name: set subnet variables
+  set_fact:
+    autoscaling_subnets: "{{ (autoscaling_subnet_facts.subnets|selectattr(subnet_tag_name,'equalto',subnet_tag_autoscaling)|idfromlistofdicts()) }}"
+    elb_subnets: "{{ (elb_subnet_facts.subnets|selectattr(subnet_tag_name,'equalto',subnet_tag_elb)|idfromlistofdicts()) }}"
+
+- debug: msg="autoscaling subnets - {{ autoscaling_subnets }} - elb subnets - {{ elb_subnets }}"

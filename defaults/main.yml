@@ -1,0 +1,53 @@
+---
+# default terragrunt variables
+plan: false
+apply: false
+destroy_env: false
+terragrunt_state_file_id: "{{ name }}"
+terragrunt_s3_region: us-east-1
+terragrunt_app_s3_key: "{{ name }}/terraform.tfstate"
+terragrunt_env_s3_key: "{{ name }}-{{ env }}/terraform.tfstate"
+terragrunt_s3_bucket: "{{ aws_account }}.terragrunt"
+
+# default elastic beanstalk variables
+aws_region: us-east-1
+stack: 64bit Amazon Linux 2016.03 v2.1.6 running Docker 1.11.2
+healthcheck_url: "/health"
+ec2keyname: myteam-{{ aws_account }}-{{ aws_region }}
+crosszone: "true"
+autoscaling_minsize: 1
+autoscaling_maxsize: 2
+deployment_policy: Rolling
+instance_type: t2.micro
+connection_draining_enabled: "false"
+connection_draining_timeout: 20
+rolling_update_enabled: "true"
+rolling_update_type: Health
+service_role: aws-elasticbeanstalk-service-role
+system_type: enhanced
+managed_actions_enabled: "true"
+preferred_start_time: "Tue:05:00"
+update_level: patch
+iam_instance_profile: aws-elasticbeanstalk-ec2-role
+
+# default subnet discovery variables
+#subnet_tag_name: tags.SUB-Type
+subnet_tag_autoscaling: Public
+subnet_tag_elb: Public
+
+# default listeners configuration
+cert_discover: true
+cert_name: "example.domain"
+elb_listeners:
+  - listener_port: 443
+    listener_protocol: HTTPS
+    listener_enabled: "true"
+    instance_port: 80
+    instance_protocol: HTTP
+    ssl_certificate_id: "{{ cert_arn }}"
+  - listener_port: 80
+    listener_protocol: HTTP
+    listener_enabled: "false"
+    instance_port: 80
+    instance_protocol: HTTP
+    ssl_certificate_id: "None"

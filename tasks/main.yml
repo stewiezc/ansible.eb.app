@@ -1,0 +1,86 @@
+---
+# Build an Elastic Beanstalk Application using terragrunt
+
+# Subnet discovery
+- include: subnet_id_discover.yml
+  when: vpc_id is defined and subnet_tag_name is defined
+
+# dtdms.io wildcard cert discovery
+- include: cert_discover.yml
+  when: cert_discover == True and cert_name is defined
+
+# terraform prep
+- name: make terraform directory
+  file: state=directory path=terraform
+- name: make eb-app terraform directory
+  file: state=directory path=terraform/{{ name }}
+- name: make eb-app-env terraform directory
+  file: state=directory path=terraform/{{ name }}-{{ env }}
+
+- name: render eb-app .terragrunt configuration
+  template: src=terragrunt-eb-app.j2 dest=terraform/{{ name }}/.terragrunt
+- name: render eb-app-env .terragrunt configuration
+  template: src=terragrunt-eb-app-env.j2 dest=terraform/{{ name }}-{{ env }}/.terragrunt
+
+- name: render eb-app main.tf
+  template: src=terragrunt-eb-app-main.tf.j2 dest=terraform/{{ name }}/main.tf
+- name: render eb-app-env main.tf
+  template: src=terragrunt-eb-app-env-main.tf.j2 dest=terraform/{{ name }}-{{ env }}/main.tf
+
+# plan
+- name: eb-app terragrunt plan
+  register: eb_app_plan
+  when: plan and not destroy_env
+  shell: terragrunt plan
+  args:
+    chdir: terraform/{{ name }}
+- name: eb-app-env terragrunt plan
+  register: eb_app_env_plan
+  when: plan and not destroy_env
+  shell: terragrunt plan
+  args:
+    chdir: terraform/{{ name }}-{{ env }}
+- debug: msg="{{ eb_app_plan.stdout_lines }}"
+  when: plan and not destroy_env
+- debug: msg="{{ eb_app_env_plan.stdout_lines }}"
+  when: plan and not destroy_env
+
+# apply
+- name: eb-app terragrunt apply
+  register: eb_app_apply
+  when: apply
+  shell: terragrunt apply
+  args:
+    chdir: terraform/{{ name }}
+- name: eb-epp-env terragrunt apply
+  register: eb_app_env_apply
+  when: apply
+  shell: terragrunt apply
+  args:
+    chdir: terraform/{{ name }}-{{ env }}
+- debug: msg="{{ eb_app_apply.stdout_lines }}"
+  when: apply
+- debug: msg="{{ eb_app_env_apply.stdout_lines }}"
+  when: apply
+
+# plan destroy
+- name: eb-app-env plan destroy
+  register: eb_app_env_plan_destroy
+  when: plan and destroy_env
+  shell: terragrunt plan -destroy
+  args:
+    chdir: terraform/{{ name }}-{{ env }}
+- debug: msg="{{ eb_app_env_plan_destroy.stdout_lines }}"
+  when: plan and destroy_env
+
+# destroy environment
+- name: eb-app-env destroy
+  register: eb_app_env_destroy
+  when: destroy_env and not plan
+  shell: terragrunt destroy -force
+  args:
+    chdir: terraform/{{ name }}-{{ env }}
+- debug: msg="{{ eb_app_env_destroy.stdout_lines }}"
+  when: destroy_env and not plan
+
+

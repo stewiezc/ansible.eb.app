@@ -1,0 +1,17 @@
+lock = {
+  backend = "dynamodb"
+  config {
+    state_file_id = "{{ terragrunt_state_file_id }}"
+  }
+}
+
+remote_state = {
+  backend = "s3"
+  config {
+    encrypt = "true"
+    bucket = "{{ terragrunt_s3_bucket }}"
+    key = "{{ terragrunt_app_s3_key }}"
+    region = "{{ terragrunt_s3_region }}"
+  }
+}
+

@@ -1,0 +1,12 @@
+# discover the arn for a named certificate
+
+- name: get cert arn
+  command: >
+    aws acm list-certificates
+  register: server_cert
+
+- name: assign arn value to cert_arn
+  set_fact:
+    cert_arn: "{{ item.CertificateArn }}"
+  when: item.DomainName == "{{ cert_name }}"
+  with_items: "{{ (server_cert.stdout|from_json).CertificateSummaryList }}"

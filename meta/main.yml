@@ -1,0 +1,6 @@
+---
+galaxy_info:
+  author: Zac Stewart
+  description: Elastic Beanstalk Playbook
+
+dependencies: []
